@@ -9,7 +9,6 @@ from telegram.ext import (
     filters,
 )
 
-# نام فایل واترمارک در ریشه پروژه
 WATERMARK_PATH = "watermark.png"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -37,7 +36,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # دانلود عکس
     photo_file = await update.message.photo[-1].get_file()
     bio = BytesIO()
-    await photo_file.download(out=bio)
+    await photo_file.download_to_memory(out=bio)
     bio.seek(0)
 
     img = Image.open(bio)
@@ -55,9 +54,8 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == "__main__":
     token = "7888649373:AAF_FduB3mtvBddI9QICLgNIOFooii987Ss"
     app = ApplicationBuilder().token(token).build()
+    
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
-
-    # شروع ربات (Polling)
     app.run_polling()
