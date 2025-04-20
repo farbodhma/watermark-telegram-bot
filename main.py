@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from telegram import Update
 from telegram.ext import Application, MessageHandler, ContextTypes, filters
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "PUT-YOUR-TOKEN-HERE")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7888649373:AAF_FduB3mtvBddI9QICLgNIOFooii987Ss")
 WATERMARK_PATH = "watermark.png"
 
 app = FastAPI()
