@@ -1,49 +1,63 @@
-import os
 from io import BytesIO
 from PIL import Image
-from fastapi import FastAPI, Request
 from telegram import Update
-from telegram.ext import Application, MessageHandler, ContextTypes, filters
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7888649373:AAF_FduB3mtvBddI9QICLgNIOFooii987Ss")
+# نام فایل واترمارک در ریشه پروژه
 WATERMARK_PATH = "watermark.png"
 
-app = FastAPI()
-bot_app = Application.builder().token(TELEGRAM_TOKEN).build()
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "سلام! عکس بفرستید تا با واترمارک برگردوندم."
+    )
 
 def add_watermark(image: Image.Image, watermark: Image.Image, scale=0.4) -> Image.Image:
-    new_width = int(image.width * scale)
-    new_height = int(watermark.height * (new_width / watermark.width))
-    watermark_resized = watermark.resize((new_width, new_height), Image.LANCZOS)
+    base = image.convert("RGBA")
+    wm = watermark.convert("RGBA")
 
-    x = (image.width - watermark_resized.width) // 2
-    y = (image.height - watermark_resized.height) // 2
+    # تغییر اندازه واترمارک
+    new_w = int(base.width * scale)
+    new_h = int(wm.height * (new_w / wm.width))
+    wm_resized = wm.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
-    image.paste(watermark_resized, (x, y), watermark_resized)
-    return image
+    # مرکز تصویر
+    x = (base.width - new_w) // 2
+    y = (base.height - new_h) // 2
 
-async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    photo = update.message.photo[-1]
-    photo_file = await photo.get_file()
-    file_bytes = BytesIO()
-    await photo_file.download(out=file_bytes)
-    file_bytes.seek(0)
+    base.paste(wm_resized, (x, y), wm_resized)
+    return base.convert("RGB")
 
-    base_image = Image.open(file_bytes).convert("RGBA")
-    watermark = Image.open(WATERMARK_PATH).convert("RGBA")
-    result = add_watermark(base_image, watermark)
+async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # دانلود عکس
+    photo_file = await update.message.photo[-1].get_file()
+    bio = BytesIO()
+    await photo_file.download(out=bio)
+    bio.seek(0)
 
-    output = BytesIO()
-    result.convert("RGB").save(output, format="JPEG")
-    output.seek(0)
+    img = Image.open(bio)
+    watermark = Image.open(WATERMARK_PATH)
 
-    await update.message.reply_photo(photo=output)
+    # اضافه کردن واترمارک
+    result = add_watermark(img, watermark, scale=0.4)
 
-bot_app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+    # ارسال مجدد
+    out_bio = BytesIO()
+    result.save(out_bio, format="JPEG")
+    out_bio.seek(0)
+    await update.message.reply_photo(photo=out_bio)
 
-@app.post("/")
-async def telegram_webhook(req: Request):
-    data = await req.json()
-    update = Update.de_json(data, bot_app.bot)
-    await bot_app.process_update(update)
-    return {"status": "ok"}
+if __name__ == "__main__":
+    token = "7888649373:AAF_FduB3mtvBddI9QICLgNIOFooii987Ss"
+    app = ApplicationBuilder().token(token).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
+
+    # شروع ربات (Polling)
+    app.run_polling()
