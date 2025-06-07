@@ -8,6 +8,7 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+import os # Add this line
 
 WATERMARK_PATH = "watermark.png"
 
@@ -52,7 +53,12 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(photo=out_bio)
 
 if __name__ == "__main__":
-    token = "7888649373:AAF_FduB3mtvBddI9QICLgNIOFooii987Ss"
+    # Get token from environment variable
+    token = os.getenv("TELEGRAM_BOT_TOKEN") # Changed this line
+    if not token:
+        print("Error: TELEGRAM_BOT_TOKEN environment variable not set.")
+        exit(1)
+
     app = ApplicationBuilder().token(token).build()
     
 

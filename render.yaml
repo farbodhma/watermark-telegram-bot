@@ -10,4 +10,5 @@ services:
     envVars:
       - key: TELEGRAM_BOT_TOKEN
         sync: false # Set to true if you want Render to manage this secret from your repo
-        value: your_telegram_bot_token_here # Replace with your actual bot token
+        value: "7888649373:AAF_FduB3mtvBddI9QICLgNIOFooii987Ss" # Replace with your actual bot token
+
