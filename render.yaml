@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: telegram-watermark-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    autoDeploy: true
+    # Add your Telegram Bot Token as an environment variable
+    # This is more secure than hardcoding it in main.py
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false # Set to true if you want Render to manage this secret from your repo
+        value: your_telegram_bot_token_here # Replace with your actual bot token
